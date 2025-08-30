@@ -1,29 +1,51 @@
 import WebSocket from "ws";
 
 import { pushTrade, startAutoFlush, stopAutoFlush } from "@/services/ticks-bulk";
+import { listTickers } from "@/services/tickers";
 
-const { FINNHUB_TOKEN, TICKERS } = process.env;
+const { FINNHUB_TOKEN } = process.env;
 
 let started = false;
 let ws: WebSocket | null = null;
+let currentSymbols = new Set<string>();
 
-const symbols = (TICKERS ?? "")
-  .split(",")
-  .map((s) => s.trim().toUpperCase())
-  .filter(Boolean);
 const url = FINNHUB_TOKEN ? `wss://ws.finnhub.io?token=${FINNHUB_TOKEN}` : null;
+
+const fetchSymbolsFromDb = async () => {
+  const items = await listTickers();
+  return items.map((t) => t.symbol.trim().toUpperCase()).filter(Boolean);
+};
+
+const resubscribe = async (socket: WebSocket) => {
+  const fresh = new Set(await fetchSymbolsFromDb());
+  // unsubscribe removed
+  for (const sym of currentSymbols) {
+    if (!fresh.has(sym)) {
+      socket.send(JSON.stringify({ type: "unsubscribe", symbol: sym }));
+    }
+  }
+  // subscribe new
+  for (const sym of fresh) {
+    if (!currentSymbols.has(sym)) {
+      socket.send(JSON.stringify({ type: "subscribe", symbol: sym }));
+    }
+  }
+  currentSymbols = fresh;
+};
 
 const open = () => {
   if (!url) throw new Error("FINNHUB_TOKEN is required");
   const socket = new WebSocket(url);
   ws = socket;
 
-  socket.on("open", () => {
+  socket.on("open", async () => {
     console.log("WS connected");
     startAutoFlush();
-    symbols.forEach((sym) =>
-      socket.send(JSON.stringify({ type: "subscribe", symbol: sym })),
-    );
+    try {
+      await resubscribe(socket);
+    } catch (e) {
+      console.error("Subscribe error:", e);
+    }
   });
 
   socket.on("message", async (data: WebSocket.RawData) => {
@@ -52,9 +74,13 @@ const open = () => {
   });
 };
 
-export const start = () => {
+export const start = async () => {
   if (started) {
     return { ok: true, started: true, message: "WS already running" } as const;
+  }
+  const symbols = await fetchSymbolsFromDb();
+  if (symbols.length === 0) {
+    return { ok: false, started: false, reason: "NO_TICKERS" } as const;
   }
   started = true;
   open();
@@ -62,6 +88,7 @@ export const start = () => {
 };
 
 export const isStarted = () => started;
+export const getSubscribedCount = () => currentSymbols.size;
 
 export const stop = async () => {
   if (!started) return { ok: true, started: false, message: "WS not running" } as const;
@@ -72,6 +99,7 @@ export const stop = async () => {
     } catch {}
     ws = null;
   }
+  currentSymbols = new Set();
   await stopAutoFlush();
   return { ok: true, started: false } as const;
 };

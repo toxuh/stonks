@@ -19,3 +19,12 @@ model PriceTick {
 
   @@index([symbol, ts])
 }
+
+
+model Ticker {
+  id               String   @id @default(uuid())
+  symbol           String   @unique
+  source           String   @default("finnhub")
+  showOnDashboard  Boolean  @default(false)
+  createdAt        DateTime @default(now())
+}

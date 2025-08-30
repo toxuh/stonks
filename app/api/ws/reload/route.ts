@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { start } from "@/scripts/worker";
+import { reload } from "@/scripts/worker";
 
 export const runtime = "nodejs";
 
 export const POST = async () => {
   try {
-    const res = await start();
+    const res = await reload();
     return NextResponse.json(res, { status: res.ok ? 200 : 400 });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";

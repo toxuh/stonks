@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { start } from "@/scripts/worker";
+import { getSubscribedCount, isStarted } from "@/scripts/worker";
 
 export const runtime = "nodejs";
 
-export const POST = async () => {
+export const GET = async () => {
   try {
-    const res = await start();
-    return NextResponse.json(res, { status: res.ok ? 200 : 400 });
+    return NextResponse.json({ ok: true, started: isStarted(), subscribed: getSubscribedCount() });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
