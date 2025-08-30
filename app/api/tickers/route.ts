@@ -13,8 +13,8 @@ export const POST = async (req: Request) => {
     const body = await req.json();
     const created = await createTicker(body);
     return NextResponse.json({ ok: true, item: created }, { status: 201 });
-  } catch (e: any) {
-    const msg = e?.message ?? "Unknown error";
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 400 });
   }
 };

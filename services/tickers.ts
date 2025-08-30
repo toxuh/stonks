@@ -23,7 +23,7 @@ export const updateTicker = async (
   id: string,
   input: Partial<Readonly<TickerInput>>,
 ) => {
-  const data: any = {};
+  const data: Partial<{ symbol: string; source: string; showOnDashboard: boolean }> = {};
   if (typeof input.symbol === "string") data.symbol = input.symbol.trim().toUpperCase();
   if (typeof input.source === "string") data.source = input.source.trim();
   if (typeof input.showOnDashboard === "boolean") data.showOnDashboard = input.showOnDashboard;

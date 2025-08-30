@@ -44,7 +44,7 @@ export const DashboardGrid = () => {
           <TickerCard
             key={t.id}
             symbol={t.symbol}
-            price={(lp?.price as any) ?? null}
+            price={lp?.price ?? null}
             history={hist}
             loading={pricesLoading || historiesLoading}
           />

@@ -11,8 +11,8 @@ export const PATCH = async (
     const body = await req.json();
     const updated = await updateTicker(params.id, body);
     return NextResponse.json({ ok: true, item: updated });
-  } catch (e: any) {
-    const msg = e?.message ?? "Unknown error";
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 400 });
   }
 };
@@ -24,8 +24,8 @@ export const DELETE = async (
   try {
     const removed = await deleteTicker(params.id);
     return NextResponse.json({ ok: true, item: removed });
-  } catch (e: any) {
-    const msg = e?.message ?? "Unknown error";
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 400 });
   }
 };

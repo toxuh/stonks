@@ -60,8 +60,9 @@ const TickersPage = () => {
       setOpen(false);
       setEditId(null);
       setForm({ symbol: "", source: "finnhub", showOnDashboard: false });
-    } catch (e: any) {
-      toast(e?.message ?? "Error");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Error";
+      toast(message);
     }
   };
 

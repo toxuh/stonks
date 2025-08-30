@@ -40,6 +40,7 @@ export const Topbar = () => {
           <div className="flex items-center">{actions}</div>
         </div>
         <div className="flex items-center gap-3">
+          <ModeToggle />
           <Separator orientation="vertical" className="h-6" />
           <WsStats />
           <WsToggle />
