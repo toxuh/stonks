@@ -1,13 +1,16 @@
 import WebSocket from "ws";
 
-import { saveTick } from "@/services/ticks";
+import { pushTrade, startAutoFlush, stopAutoFlush } from "@/services/ticks-bulk";
 
 const { FINNHUB_TOKEN, TICKERS } = process.env;
 
 let started = false;
 let ws: WebSocket | null = null;
 
-const symbols = (TICKERS ?? "").split(",").map((s) => s.trim().toUpperCase());
+const symbols = (TICKERS ?? "")
+  .split(",")
+  .map((s) => s.trim().toUpperCase())
+  .filter(Boolean);
 const url = FINNHUB_TOKEN ? `wss://ws.finnhub.io?token=${FINNHUB_TOKEN}` : null;
 
 const open = () => {
@@ -17,6 +20,7 @@ const open = () => {
 
   socket.on("open", () => {
     console.log("WS connected");
+    startAutoFlush();
     symbols.forEach((sym) =>
       socket.send(JSON.stringify({ type: "subscribe", symbol: sym })),
     );
@@ -27,13 +31,7 @@ const open = () => {
       const msg = JSON.parse(data.toString());
       if (msg?.data && Array.isArray(msg.data)) {
         for (const t of msg.data) {
-          await saveTick({
-            symbol: t.s,
-            price: t.p,
-            volume: t.v ?? null,
-            ts: new Date(t.t),
-            source: "finnhub",
-          });
+          pushTrade(t);
         }
       }
     } catch (e) {
@@ -65,7 +63,7 @@ export const start = () => {
 
 export const isStarted = () => started;
 
-export const stop = () => {
+export const stop = async () => {
   if (!started) return { ok: true, started: false, message: "WS not running" } as const;
   started = false;
   if (ws) {
@@ -74,5 +72,6 @@ export const stop = () => {
     } catch {}
     ws = null;
   }
+  await stopAutoFlush();
   return { ok: true, started: false } as const;
 };

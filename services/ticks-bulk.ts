@@ -12,6 +12,7 @@ export interface SaveTickInput {
 
 const BUF: SaveTickInput[] = [];
 let flushing = false;
+let interval: NodeJS.Timeout | null = null;
 
 export const pushTrade = (t: In) => {
   BUF.push({
@@ -36,5 +37,14 @@ const flush = async () => {
 };
 
 export const startAutoFlush = () => {
-  setInterval(flush, 500);
+  if (interval) return;
+  interval = setInterval(flush, 500);
+};
+
+export const stopAutoFlush = async () => {
+  if (interval) {
+    clearInterval(interval);
+    interval = null;
+  }
+  await flush();
 };
