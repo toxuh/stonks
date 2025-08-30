@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export const WsToggle = () => {
   const [loading, setLoading] = useState(false);
@@ -54,8 +55,11 @@ export const WsToggle = () => {
           </DialogHeader>
           <p className="text-sm text-muted-foreground">Add at least one ticker before starting the stream.</p>
           <div className="flex justify-end gap-2">
-            <Button variant="default" onClick={() => setNoTickersOpen(false)}>
-              Ok
+            <Button variant="outline" onClick={() => setNoTickersOpen(false)}>
+              Close
+            </Button>
+            <Button asChild>
+              <Link href="/tickers">Go to Tickers</Link>
             </Button>
           </div>
         </DialogContent>

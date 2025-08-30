@@ -31,6 +31,8 @@ const TickersPage = () => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>({ symbol: "", source: "finnhub", showOnDashboard: false });
   const [editId, setEditId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
 
   // Setup header title and actions (+)
   useEffect(() => {
@@ -66,6 +68,16 @@ const TickersPage = () => {
   return (
     <div className="grid gap-4">
       <Toaster />
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 max-w-sm">
+          <Input
+            placeholder="Search symbols..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
 
       <div className="rounded border">
         <Table>
@@ -87,7 +99,9 @@ const TickersPage = () => {
                 <TableCell colSpan={4}>No tickers</TableCell>
               </TableRow>
             ) : (
-              items.map((t) => (
+              items
+                .filter((t) => t.symbol.toLowerCase().includes(search.toLowerCase()))
+                .map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-mono">{t.symbol}</TableCell>
                   <TableCell>{t.source}</TableCell>
