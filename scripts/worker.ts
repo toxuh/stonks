@@ -1,6 +1,10 @@
 import WebSocket from "ws";
 
-import { pushTrade, startAutoFlush, stopAutoFlush } from "@/services/ticks-bulk";
+import {
+  pushTrade,
+  startAutoFlush,
+  stopAutoFlush,
+} from "@/services/ticks-bulk";
 import { listTickers } from "@/services/tickers";
 
 const { FINNHUB_TOKEN } = process.env;
@@ -18,13 +22,13 @@ const fetchSymbolsFromDb = async () => {
 
 const resubscribe = async (socket: WebSocket) => {
   const fresh = new Set(await fetchSymbolsFromDb());
-  // unsubscribe removed
+
   for (const sym of currentSymbols) {
     if (!fresh.has(sym)) {
       socket.send(JSON.stringify({ type: "unsubscribe", symbol: sym }));
     }
   }
-  // subscribe new
+
   for (const sym of fresh) {
     if (!currentSymbols.has(sym)) {
       socket.send(JSON.stringify({ type: "subscribe", symbol: sym }));
@@ -91,7 +95,8 @@ export const isStarted = () => started;
 export const getSubscribedCount = () => currentSymbols.size;
 
 export const stop = async () => {
-  if (!started) return { ok: true, started: false, message: "WS not running" } as const;
+  if (!started)
+    return { ok: true, started: false, message: "WS not running" } as const;
   started = false;
   if (ws) {
     try {

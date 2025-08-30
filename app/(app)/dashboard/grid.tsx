@@ -4,7 +4,6 @@ import { useEffect, useMemo } from "react";
 import { useHeaderBar } from "@/components/header-bar";
 import { TickerCard } from "@/components/dashboard/ticker-card";
 import { useDashboardTickers, useLastPrices, useHistories } from "@/hooks/use-dashboard";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export const DashboardGrid = () => {
   const { setTitle, setActions } = useHeaderBar();
@@ -23,31 +22,44 @@ export const DashboardGrid = () => {
 
   if (tickersLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-32" />
+          <div key={i} className="loading-skeleton h-48 rounded-xl animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
         ))}
       </div>
     );
   }
 
   if (tickers.length === 0) {
-    return <div className="text-sm text-muted-foreground">No tickers selected for dashboard.</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
+        <div className="text-6xl mb-4 animate-bounce-subtle">📈</div>
+        <h3 className="text-lg font-semibold text-foreground mb-2">No Tickers Selected</h3>
+        <p className="text-sm text-muted-foreground text-center max-w-md">
+          Add some tickers to your dashboard to start tracking market data in real-time.
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {tickers.map((t) => {
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {tickers.map((t, index) => {
         const lp = lastPrices.find((x) => x.symbol === t.symbol);
         const hist = histories.get(t.symbol) ?? [];
         return (
-          <TickerCard
+          <div
             key={t.id}
-            symbol={t.symbol}
-            price={lp?.price ?? null}
-            history={hist}
-            loading={pricesLoading || historiesLoading}
-          />
+            className="animate-fade-in hover-lift"
+            style={{ animationDelay: `${index * 100}ms` }}
+          >
+            <TickerCard
+              symbol={t.symbol}
+              price={lp?.price ?? null}
+              history={hist}
+              loading={pricesLoading || historiesLoading}
+            />
+          </div>
         );
       })}
     </div>
