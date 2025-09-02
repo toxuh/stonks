@@ -25,6 +25,19 @@ export const pushTrade = (t: In) => {
   });
 };
 
+// General-purpose push for fallback/providers
+export const pushTick = (input: Readonly<{ symbol: string; price: number; volume?: number | null; ts?: Date; source?: string }>) => {
+  const { symbol, price, volume = null, ts = new Date(), source = "finnhub" } = input;
+  BUF.push({
+    id: crypto.randomUUID(),
+    symbol: symbol.toUpperCase(),
+    price,
+    volume,
+    ts,
+    source,
+  });
+};
+
 const flush = async () => {
   if (flushing || BUF.length === 0) return;
   flushing = true;

@@ -13,10 +13,12 @@ export const GET = async (req: Request) => {
     where: { symbol },
     orderBy: { ts: "desc" },
     take: limit,
-    select: { price: true },
+    select: { price: true, ts: true },
   });
 
-  const items = rows.map((r) => Number(r.price)).reverse();
+  const items = rows
+    .map((r) => ({ price: Number(r.price), ts: r.ts.toISOString() }))
+    .reverse();
   return NextResponse.json({ ok: true, items });
 };
 

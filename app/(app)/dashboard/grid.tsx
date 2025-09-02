@@ -47,6 +47,7 @@ export const DashboardGrid = () => {
       {tickers.map((t, index) => {
         const lp = lastPrices.find((x) => x.symbol === t.symbol);
         const hist = histories.get(t.symbol) ?? [];
+        const lastUpdatedTs = lp?.ts ?? hist.at(-1)?.ts ?? null;
         return (
           <div
             key={t.id}
@@ -57,6 +58,7 @@ export const DashboardGrid = () => {
               symbol={t.symbol}
               price={lp?.price ?? null}
               history={hist}
+              lastUpdatedTs={lastUpdatedTs}
               loading={pricesLoading || historiesLoading}
             />
           </div>
