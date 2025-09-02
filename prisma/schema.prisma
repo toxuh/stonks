@@ -26,5 +26,25 @@ model Ticker {
   symbol           String   @unique
   source           String   @default("finnhub")
   showOnDashboard  Boolean  @default(false)
+
+  // Enriched company info (optional)
+  name             String?
+  exchange         String?
+  currency         String?
+  country          String?
+  sector           String?
+  industry         String?
+  ipoDate          DateTime?
+  website          String?
+  logoUrl          String?
+  marketCap        Decimal?  @db.Decimal(20, 2)
+  peRatio          Decimal?  @db.Decimal(20, 6)
+  dividendYield    Decimal?  @db.Decimal(20, 6)
+  description      String?
+
+  enrichmentSource String?
+  lastEnrichedAt   DateTime?
+
   createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

@@ -9,6 +9,22 @@ export interface TickerDto {
   source: string;
   showOnDashboard: boolean;
   createdAt: string;
+  // enriched fields (optional)
+  name?: string | null;
+  exchange?: string | null;
+  currency?: string | null;
+  country?: string | null;
+  sector?: string | null;
+  industry?: string | null;
+  ipoDate?: string | null;
+  website?: string | null;
+  logoUrl?: string | null;
+  marketCap?: string | number | null;
+  peRatio?: string | number | null;
+  dividendYield?: string | number | null;
+  description?: string | null;
+  enrichmentSource?: string | null;
+  lastEnrichedAt?: string | null;
 }
 
 const QK = {
@@ -57,3 +73,13 @@ export const useDeleteTicker = () => {
   });
 };
 
+export const useRefreshEnrichment = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await axios.post(`/api/tickers/${id}/enrich`);
+      return data.item as TickerDto;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK.list }),
+  });
+};

@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
+
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import {
@@ -8,6 +13,7 @@ import {
   useDeleteTicker,
   useTickers,
   useUpdateTicker,
+  useRefreshEnrichment,
 } from "@/hooks/use-tickers";
 import { useHeaderBar } from "@/components/header-bar";
 import {
@@ -18,6 +24,7 @@ import {
   Edit,
   Trash2,
   MoreHorizontal,
+  RefreshCw,
 } from "lucide-react";
 import {
   Table,
@@ -60,7 +67,7 @@ interface FormState {
   showOnDashboard?: boolean;
 }
 
-type SortField = "symbol" | "source" | "showOnDashboard";
+type SortField = "symbol" | "source" | "showOnDashboard" | "name" | "marketCap";
 type SortDirection = "asc" | "desc";
 
 interface SortState {
@@ -73,6 +80,7 @@ const TickersPage = () => {
   const createMutation = useCreateTicker();
   const updateMutation = useUpdateTicker();
   const deleteMutation = useDeleteTicker();
+  const refreshMutation = useRefreshEnrichment();
 
   const { setTitle, setActions } = useHeaderBar();
 
@@ -109,14 +117,38 @@ const TickersPage = () => {
 
     // Сортировка
     filtered.sort((a, b) => {
-      let aValue = a[sort.field];
-      let bValue = b[sort.field];
-
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
+      let aValue: number | string;
+      let bValue: number | string;
+      switch (sort.field) {
+        case "marketCap": {
+          const av = Number(a.marketCap);
+          const bv = Number(b.marketCap);
+          aValue = Number.isFinite(av) ? av : Number.NEGATIVE_INFINITY;
+          bValue = Number.isFinite(bv) ? bv : Number.NEGATIVE_INFINITY;
+          break;
+        }
+        case "showOnDashboard": {
+          aValue = a.showOnDashboard ? 1 : 0;
+          bValue = b.showOnDashboard ? 1 : 0;
+          break;
+        }
+        case "name": {
+          aValue = (a.name ?? "").toLowerCase();
+          bValue = (b.name ?? "").toLowerCase();
+          break;
+        }
+        case "source": {
+          aValue = (a.source ?? "").toLowerCase();
+          bValue = (b.source ?? "").toLowerCase();
+          break;
+        }
+        case "symbol":
+        default: {
+          aValue = (a.symbol ?? "").toLowerCase();
+          bValue = (b.symbol ?? "").toLowerCase();
+          break;
+        }
       }
-
       if (aValue < bValue) return sort.direction === "asc" ? -1 : 1;
       if (aValue > bValue) return sort.direction === "asc" ? 1 : -1;
       return 0;
@@ -306,6 +338,40 @@ const TickersPage = () => {
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => handleSort("name")}
+                  className="h-auto p-0 font-semibold hover:bg-transparent"
+                >
+                  Name
+                  {sort.field === "name" &&
+                    (sort.direction === "asc" ? (
+                      <SortAsc className="ml-1 h-3 w-3" />
+                    ) : (
+                      <SortDesc className="ml-1 h-3 w-3" />
+                    ))}
+                </Button>
+              </TableHead>
+              <TableHead className="font-semibold">Exchange</TableHead>
+              <TableHead className="font-semibold">Sector</TableHead>
+              <TableHead className="font-semibold">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleSort("marketCap")}
+                  className="h-auto p-0 font-semibold hover:bg-transparent"
+                >
+                  Market Cap
+                  {sort.field === "marketCap" &&
+                    (sort.direction === "asc" ? (
+                      <SortAsc className="ml-1 h-3 w-3" />
+                    ) : (
+                      <SortDesc className="ml-1 h-3 w-3" />
+                    ))}
+                </Button>
+              </TableHead>
+              <TableHead className="font-semibold">
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleSort("source")}
                   className="h-auto p-0 font-semibold hover:bg-transparent"
                 >
@@ -334,15 +400,14 @@ const TickersPage = () => {
                     ))}
                 </Button>
               </TableHead>
-              <TableHead className="text-right font-semibold">
-                Actions
-              </TableHead>
+              <TableHead className="font-semibold">Last Enriched</TableHead>
+              <TableHead className="text-right font-semibold">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8">
+                <TableCell colSpan={9} className="text-center py-8">
                   <div className="flex items-center justify-center gap-2">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                     Loading tickers...
@@ -351,7 +416,7 @@ const TickersPage = () => {
               </TableRow>
             ) : filteredAndSortedItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8">
+                <TableCell colSpan={9} className="text-center py-8">
                   <div className="text-muted-foreground">
                     {items.length === 0
                       ? "No tickers found. Add your first ticker!"
@@ -368,11 +433,42 @@ const TickersPage = () => {
                   <TableCell className="font-mono font-semibold text-primary">
                     {t.symbol}
                   </TableCell>
+
+                  {/* Name + logo */}
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      {t.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={t.logoUrl} alt={t.symbol} className="h-6 w-6 rounded-sm bg-muted object-contain" />
+                      ) : (
+                        <div className="h-6 w-6 rounded-sm bg-muted" />
+                      )}
+                      <div className="flex flex-col">
+                        <span className="font-medium truncate max-w-[220px]">{t.name || "—"}</span>
+                        <span className="text-xs text-muted-foreground truncate max-w-[220px]">{t.website || ""}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+
+                  {/* Exchange */}
+                  <TableCell>{t.exchange || "—"}</TableCell>
+
+                  {/* Sector */}
+                  <TableCell>{t.sector || "—"}</TableCell>
+
+                  {/* Market Cap */}
+                  <TableCell>
+                    {t.marketCap ? new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 2 }).format(Number(t.marketCap)) : "—"}
+                  </TableCell>
+
+                  {/* Source */}
                   <TableCell>
                     <Badge variant="outline" className="capitalize">
                       {t.source}
                     </Badge>
                   </TableCell>
+
+                  {/* Dashboard toggle */}
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Switch
@@ -383,10 +479,16 @@ const TickersPage = () => {
                             input: { showOnDashboard: checked },
                           })
                         }
-
                       />
                     </div>
                   </TableCell>
+
+                  {/* Last Enriched */}
+                  <TableCell>
+                    {t.lastEnrichedAt ? dayjs(t.lastEnrichedAt).fromNow() : "—"}
+                  </TableCell>
+
+                  {/* Actions */}
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -398,7 +500,15 @@ const TickersPage = () => {
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onClick={() => refreshMutation.mutate(t.id)}
+                          className="gap-2"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          Refresh enrichment
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => {
                             setEditId(t.id);
