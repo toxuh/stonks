@@ -31,7 +31,7 @@ export const useLastPrices = (symbols: string[], refetchMs = 3000) =>
     staleTime: refetchMs,
   });
 
-export interface HistoryPoint { price: number; ts: string }
+export interface HistoryPoint { price: number; ts: string; createdAt: string }
 
 export const useHistories = (symbols: string[], limit = 50, refetchMs = 10000) => {
   const queries = useQueries({

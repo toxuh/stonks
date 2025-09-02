@@ -13,6 +13,7 @@ import {
 
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { useTickers } from "@/hooks/use-tickers";
 
 interface NavItemProps {
   href: string;
@@ -72,9 +73,12 @@ const NavItem = ({
 };
 
 export const Sidebar = () => {
+  const { data: tickers = [] } = useTickers();
+  const activeTickersCount = tickers.length;
+
   return (
-    <aside className="sticky top-0 flex h-screen w-64 flex-col gap-4 border-r glass shadow-custom-lg p-4 animate-slide-up">
-      <div className="flex items-center gap-3 px-2 py-3">
+    <aside className="sticky top-0 flex h-screen w-64 flex-col gap-4 border-r glass backdrop-blur-md bg-background/80 shadow-custom-lg p-4 animate-slide-up">
+      <Link href="/dashboard" className="flex items-center gap-3 px-2 py-3 hover:bg-accent/50 rounded-lg transition-colors">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-custom-sm">
           <TrendingUp className="h-4 w-4" />
         </div>
@@ -86,7 +90,7 @@ export const Sidebar = () => {
             Market Analytics
           </span>
         </div>
-      </div>
+      </Link>
 
       <Separator className="opacity-50" />
 
@@ -100,9 +104,13 @@ export const Sidebar = () => {
           href="/dashboard"
           icon={BarChart3}
           label="Dashboard"
-          badge="Live"
         />
-        <NavItem href="/tickers" icon={LineChart} label="Tickers" />
+        <NavItem
+          href="/tickers"
+          icon={LineChart}
+          label="Tickers"
+          badge={activeTickersCount > 0 ? activeTickersCount.toString() : undefined}
+        />
         <NavItem href="/settings" icon={Settings} label="Settings" />
       </nav>
 

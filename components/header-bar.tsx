@@ -7,15 +7,19 @@ import {
   useContext,
   useMemo,
   useState,
+  useEffect,
 } from "react";
+import axios from "axios";
 
-import ModeToggle from "@/components/mode-toggle";
-import { Separator } from "@/components/ui/separator";
-import { WsStats } from "@/components/ws-stats";
-import { WsToggle } from "@/components/ws-toggle";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { Badge } from "@/components/ui/badge";
-import { Clock, TrendingUp, Users } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface Ctx {
   title: ReactNode | null;
@@ -50,32 +54,79 @@ export const useHeaderBar = () => {
   return ctx;
 };
 
-const QuickStats = () => {
-  const currentTime = new Date().toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+const LiveWidget = () => {
+  const [loading, setLoading] = useState(false);
+  const [started, setStarted] = useState(false);
+  const [noTickersOpen, setNoTickersOpen] = useState(false);
+
+  useEffect(() => {
+    axios
+      .get("/api/ws/status")
+      .then((r) => setStarted(Boolean(r.data?.started)))
+      .catch(() => setStarted(false));
+  }, []);
+
+  const onClick = async () => {
+    setLoading(true);
+    try {
+      if (started) {
+        await axios.post("/api/ws/stop");
+      } else {
+        await axios.post("/api/ws/start");
+      }
+      setStarted(!started);
+    } catch (e: unknown) {
+      if (axios.isAxiosError(e) && e.response?.data?.reason === "NO_TICKERS") {
+        setNoTickersOpen(true);
+        setStarted(false);
+      } else {
+        console.error(e);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="hidden md:flex items-center gap-4 text-sm">
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent/50 border border-border/50">
-        <Clock className="h-3 w-3 text-muted-foreground" />
-        <span className="text-muted-foreground">{currentTime}</span>
+    <>
+      <div className="hidden md:flex items-center gap-4 text-sm">
+        <div
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-colors ${
+            started
+              ? "bg-green-500/10 border-green-500/20 hover:bg-green-500/20"
+              : "bg-gray-500/10 border-gray-500/20 hover:bg-gray-500/20"
+          } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+          onClick={loading ? undefined : onClick}
+        >
+          <div
+            className={`h-2 w-2 rounded-full ${started ? "bg-green-500 animate-pulse" : "bg-gray-500"}`}
+          />
+          <span
+            className={`font-medium ${started ? "text-green-700 dark:text-green-400" : "text-gray-700 dark:text-gray-400"}`}
+          >
+            Live
+          </span>
+        </div>
       </div>
-
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20">
-        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-        <span className="text-green-700 dark:text-green-400 font-medium">
-          Live
-        </span>
-      </div>
-
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
-        <TrendingUp className="h-3 w-3 text-primary" />
-        <span className="text-primary font-medium">+2.4%</span>
-      </div>
-    </div>
+      <Dialog open={noTickersOpen} onOpenChange={setNoTickersOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>No tickers configured</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Add at least one ticker before starting the stream.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setNoTickersOpen(false)}>
+              Close
+            </Button>
+            <Button asChild>
+              <Link href="/tickers">Go to Tickers</Link>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
@@ -83,7 +134,7 @@ export const Topbar = () => {
   const { title, actions } = useHeaderBar();
 
   return (
-    <div className="sticky top-0 z-10 glass border-b shadow-custom-sm animate-slide-up">
+    <div className="sticky top-0 z-10 glass backdrop-blur-md bg-background/80 border-b shadow-custom-sm animate-slide-up">
       <div className="flex items-center justify-between px-6 py-4 gap-4">
         <div className="flex flex-col gap-2 min-w-0 flex-1">
           <div className="flex items-center gap-4">
@@ -93,30 +144,7 @@ export const Topbar = () => {
           <Breadcrumbs />
         </div>
 
-        <QuickStats />
-
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-3">
-            <WsStats />
-            <WsToggle />
-          </div>
-
-          <Separator orientation="vertical" className="h-6 opacity-50" />
-
-          <ModeToggle />
-
-          <div className="relative">
-            <div className="h-8 w-8 rounded-lg bg-accent/50 border border-border/50 flex items-center justify-center hover:bg-accent transition-colors cursor-pointer">
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs animate-scale-in"
-            >
-              3
-            </Badge>
-          </div>
-        </div>
+        <LiveWidget />
       </div>
     </div>
   );

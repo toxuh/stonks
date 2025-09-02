@@ -13,11 +13,11 @@ export const GET = async (req: Request) => {
     where: { symbol },
     orderBy: { ts: "desc" },
     take: limit,
-    select: { price: true, ts: true },
+    select: { price: true, ts: true, createdAt: true },
   });
 
   const items = rows
-    .map((r) => ({ price: Number(r.price), ts: r.ts.toISOString() }))
+    .map((r) => ({ price: Number(r.price), ts: r.ts.toISOString(), createdAt: r.createdAt.toISOString() }))
     .reverse();
   return NextResponse.json({ ok: true, items });
 };

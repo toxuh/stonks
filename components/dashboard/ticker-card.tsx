@@ -18,7 +18,7 @@ import { TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
 interface Props {
   symbol: string;
   price: number | null;
-  history?: { price: number; ts: string }[];
+  history?: { price: number; ts: string; createdAt: string }[];
   lastUpdatedTs?: string | null;
   loading?: boolean;
 }
@@ -74,7 +74,6 @@ export const TickerCard = ({
   symbol,
   price,
   history = [],
-  lastUpdatedTs = null,
   loading = false,
 }: Readonly<Props>) => {
   const prevPriceRef = useRef<number | null>(null);
@@ -130,8 +129,16 @@ export const TickerCard = ({
         : "";
 
   // Asset type detection: Crypto via SOURCE:SYMBOL, FX via prefixes or 6-letter pairs like EURUSD/EURUSD
-  const isCrypto = symbol.includes(":") || symbol.startsWith("BINANCE:") || symbol.startsWith("COINBASE:") || symbol.startsWith("KRAKEN:");
-  const isFx = symbol.startsWith("FX:") || symbol.startsWith("OANDA:") || /^[A-Z]{3}[A-Z]{3}$/.test(symbol) || /^(?:[A-Z]{3})\/(?:[A-Z]{3})$/.test(symbol);
+  const isCrypto =
+    symbol.includes(":") ||
+    symbol.startsWith("BINANCE:") ||
+    symbol.startsWith("COINBASE:") ||
+    symbol.startsWith("KRAKEN:");
+  const isFx =
+    symbol.startsWith("FX:") ||
+    symbol.startsWith("OANDA:") ||
+    /^[A-Z]{3}[A-Z]{3}$/.test(symbol) ||
+    /^(?:[A-Z]{3})\/(?:[A-Z]{3})$/.test(symbol);
   const assetLabel = isCrypto ? "Crypto" : isFx ? "FX" : "Stock";
   const assetBadgeClass = isCrypto
     ? "border-amber-500 text-amber-600 dark:text-amber-400"
@@ -143,7 +150,7 @@ export const TickerCard = ({
 
   return (
     <Card
-      className={`group relative overflow-hidden transition-all duration-300 hover:shadow-custom-lg hover:scale-[1.02] animate-fade-in gradient-card border-border/50 ${pulseBg} ${pulseShadow}`}
+      className={`group relative overflow-hidden transition-all duration-300 hover:shadow-custom-lg animate-fade-in gradient-card border-border/50 ${pulseBg} ${pulseShadow}`}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-chart-1/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
@@ -153,7 +160,10 @@ export const TickerCard = ({
             <span className="font-mono text-lg font-bold text-foreground">
               {symbol}
             </span>
-            <Badge variant="outline" className={`text-xs px-2 py-0.5 ${assetBadgeClass}`}>
+            <Badge
+              variant="outline"
+              className={`text-xs px-2 py-0.5 ${assetBadgeClass}`}
+            >
               {assetLabel}
             </Badge>
           </div>
@@ -191,10 +201,27 @@ export const TickerCard = ({
                 <YAxis hide domain={["auto", "auto"]} />
                 <Tooltip
                   cursor={{ stroke: "#94a3b8", strokeWidth: 1, opacity: 0.4 }}
-                  contentStyle={{ fontSize: 12, padding: 6, background: "hsl(var(--popover) / 0.95)", color: "hsl(var(--popover-foreground))", border: "1px solid hsl(var(--border))", borderRadius: 8, backdropFilter: "blur(8px)", boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)" }}
+                  contentStyle={{
+                    fontSize: 12,
+                    padding: 6,
+                    background: "hsl(var(--popover) / 0.95)",
+                    color: "hsl(var(--popover-foreground))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 8,
+                    backdropFilter: "blur(8px)",
+                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)",
+                  }}
                   labelStyle={{ color: "hsl(var(--muted-foreground))" }}
-                  labelFormatter={(v: string) => dayjs(v).format("HH:mm:ss")}
-                  formatter={(value: number) => [formatPrice(Number(value)), "Price"]}
+                  labelFormatter={(v, payload) => {
+                    const point = payload?.[0]?.payload;
+                    return point?.createdAt
+                      ? dayjs(point.createdAt).format("HH:mm:ss")
+                      : dayjs(v).format("HH:mm:ss");
+                  }}
+                  formatter={(value: number) => [
+                    formatPrice(Number(value)),
+                    "Price",
+                  ]}
                 />
                 <Line
                   type="monotone"
@@ -212,7 +239,6 @@ export const TickerCard = ({
             </div>
           )}
         </div>
-
       </CardContent>
 
       <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-chart-1/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />

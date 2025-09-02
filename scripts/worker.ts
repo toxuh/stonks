@@ -14,8 +14,9 @@ export const start = async () => {
   const p = ensureProvider();
   try {
     await p.start();
-  } catch (e: any) {
-    if (e?.message === "NO_TICKERS") {
+  } catch (e) {
+    const err = e as { message?: string };
+    if (err?.message === "NO_TICKERS") {
       return { ok: false, started: false, reason: "NO_TICKERS" } as const;
     }
     throw e;

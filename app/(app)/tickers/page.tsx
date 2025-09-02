@@ -28,6 +28,7 @@ import {
   RefreshCw,
   DollarSign,
   Percent,
+  Star,
 } from "lucide-react";
 import {
   Table,
@@ -233,7 +234,7 @@ const TickersPage = () => {
       <Toaster />
 
       {/* Статистика */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="gradient-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -269,19 +270,6 @@ const TickersPage = () => {
           <CardContent>
             <div className="text-2xl font-bold text-chart-2">
               {new Set(items.map((item) => item.source)).size}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="gradient-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Filtered
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-chart-3">
-              {filteredAndSortedItems.length}
             </div>
           </CardContent>
         </Card>
@@ -332,6 +320,22 @@ const TickersPage = () => {
         <Table>
           <TableHeader>
             <TableRow className="border-border/50">
+              <TableHead className="font-semibold w-12">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleSort("showOnDashboard")}
+                  className="h-auto p-0 font-semibold hover:bg-transparent"
+                >
+                  <Star className="h-4 w-4" />
+                  {sort.field === "showOnDashboard" &&
+                    (sort.direction === "asc" ? (
+                      <SortAsc className="ml-1 h-3 w-3" />
+                    ) : (
+                      <SortDesc className="ml-1 h-3 w-3" />
+                    ))}
+                </Button>
+              </TableHead>
               <TableHead className="font-semibold">
                 <Button
                   variant="ghost"
@@ -382,42 +386,8 @@ const TickersPage = () => {
                     ))}
                 </Button>
               </TableHead>
-              <TableHead className="font-semibold">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort("source")}
-                  className="h-auto p-0 font-semibold hover:bg-transparent"
-                >
-                  Source
-                  {sort.field === "source" &&
-                    (sort.direction === "asc" ? (
-                      <SortAsc className="ml-1 h-3 w-3" />
-                    ) : (
-                      <SortDesc className="ml-1 h-3 w-3" />
-                    ))}
-                </Button>
-              </TableHead>
-              <TableHead className="font-semibold">Currency</TableHead>
               <TableHead className="font-semibold flex items-center gap-1">PE</TableHead>
               <TableHead className="font-semibold flex items-center gap-1">Div. Yield</TableHead>
-              <TableHead className="font-semibold">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSort("showOnDashboard")}
-                  className="h-auto p-0 font-semibold hover:bg-transparent"
-                >
-                  Dashboard
-                  {sort.field === "showOnDashboard" &&
-                    (sort.direction === "asc" ? (
-                      <SortAsc className="ml-1 h-3 w-3" />
-                    ) : (
-                      <SortDesc className="ml-1 h-3 w-3" />
-                    ))}
-                </Button>
-              </TableHead>
-              <TableHead className="font-semibold">Last Enriched</TableHead>
               <TableHead className="text-right font-semibold">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -447,6 +417,27 @@ const TickersPage = () => {
                   key={t.id}
                   className="group hover:bg-accent/50 transition-colors"
                 >
+                  {/* Dashboard star */}
+                  <TableCell>
+                    <button
+                      onClick={() =>
+                        updateMutation.mutate({
+                          id: t.id,
+                          input: { showOnDashboard: !t.showOnDashboard },
+                        })
+                      }
+                      className="p-1 hover:bg-accent rounded transition-colors"
+                    >
+                      <Star
+                        className={`h-4 w-4 ${
+                          t.showOnDashboard
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      />
+                    </button>
+                  </TableCell>
+
                   <TableCell className="font-mono font-semibold text-primary">
                     {t.symbol}
                   </TableCell>
@@ -478,16 +469,6 @@ const TickersPage = () => {
                     {t.marketCap ? new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 2 }).format(Number(t.marketCap)) : "—"}
                   </TableCell>
 
-                  {/* Source */}
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize">
-                      {t.source}
-                    </Badge>
-                  </TableCell>
-
-                  {/* Currency */}
-                  <TableCell>{t.currency || "—"}</TableCell>
-
                   {/* PE */}
                   <TableCell>
                     {t.peRatio != null ? Number(t.peRatio).toFixed(2) : "—"}
@@ -496,26 +477,6 @@ const TickersPage = () => {
                   {/* Div. Yield */}
                   <TableCell>
                     {t.dividendYield != null ? `${(Number(t.dividendYield) * 100).toFixed(2)}%` : "—"}
-                  </TableCell>
-
-                  {/* Dashboard toggle */}
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={t.showOnDashboard}
-                        onCheckedChange={(checked) =>
-                          updateMutation.mutate({
-                            id: t.id,
-                            input: { showOnDashboard: checked },
-                          })
-                        }
-                      />
-                    </div>
-                  </TableCell>
-
-                  {/* Last Enriched */}
-                  <TableCell>
-                    {t.lastEnrichedAt ? dayjs(t.lastEnrichedAt).fromNow() : "—"}
                   </TableCell>
 
                   {/* Actions */}
