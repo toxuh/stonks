@@ -191,7 +191,7 @@ export const TickerCard = ({
                 <YAxis hide domain={["auto", "auto"]} />
                 <Tooltip
                   cursor={{ stroke: "#94a3b8", strokeWidth: 1, opacity: 0.4 }}
-                  contentStyle={{ fontSize: 12, padding: 6, background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+                  contentStyle={{ fontSize: 12, padding: 6, background: "hsl(var(--popover) / 0.95)", color: "hsl(var(--popover-foreground))", border: "1px solid hsl(var(--border))", borderRadius: 8, backdropFilter: "blur(8px)", boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)" }}
                   labelStyle={{ color: "hsl(var(--muted-foreground))" }}
                   labelFormatter={(v: string) => dayjs(v).format("HH:mm:ss")}
                   formatter={(value: number) => [formatPrice(Number(value)), "Price"]}
