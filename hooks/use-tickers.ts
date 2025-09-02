@@ -83,3 +83,14 @@ export const useRefreshEnrichment = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: QK.list }),
   });
 };
+
+export const useRefreshAllEnrichment = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await axios.post(`/api/tickers/enrich`);
+      return data as { ok: boolean; count: number };
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK.list }),
+  });
+};

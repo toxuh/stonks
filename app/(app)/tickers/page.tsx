@@ -14,6 +14,7 @@ import {
   useTickers,
   useUpdateTicker,
   useRefreshEnrichment,
+  useRefreshAllEnrichment,
 } from "@/hooks/use-tickers";
 import { useHeaderBar } from "@/components/header-bar";
 import {
@@ -25,6 +26,8 @@ import {
   Trash2,
   MoreHorizontal,
   RefreshCw,
+  DollarSign,
+  Percent,
 } from "lucide-react";
 import {
   Table,
@@ -81,6 +84,7 @@ const TickersPage = () => {
   const updateMutation = useUpdateTicker();
   const deleteMutation = useDeleteTicker();
   const refreshMutation = useRefreshEnrichment();
+  const refreshAllMutation = useRefreshAllEnrichment();
 
   const { setTitle, setActions } = useHeaderBar();
 
@@ -187,6 +191,16 @@ const TickersPage = () => {
         >
           <Plus className="h-4 w-4" />
           Add Ticker
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => refreshAllMutation.mutate()}
+          className="gap-2"
+          disabled={refreshAllMutation.isPending}
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshAllMutation.isPending ? "animate-spin" : ""}`} />
+          {refreshAllMutation.isPending ? "Refreshing..." : "Refresh all"}
         </Button>
       </div>,
     );
@@ -384,6 +398,9 @@ const TickersPage = () => {
                     ))}
                 </Button>
               </TableHead>
+              <TableHead className="font-semibold">Currency</TableHead>
+              <TableHead className="font-semibold flex items-center gap-1">PE</TableHead>
+              <TableHead className="font-semibold flex items-center gap-1">Div. Yield</TableHead>
               <TableHead className="font-semibold">
                 <Button
                   variant="ghost"
@@ -468,6 +485,19 @@ const TickersPage = () => {
                     </Badge>
                   </TableCell>
 
+                  {/* Currency */}
+                  <TableCell>{t.currency || "—"}</TableCell>
+
+                  {/* PE */}
+                  <TableCell>
+                    {t.peRatio != null ? Number(t.peRatio).toFixed(2) : "—"}
+                  </TableCell>
+
+                  {/* Div. Yield */}
+                  <TableCell>
+                    {t.dividendYield != null ? `${(Number(t.dividendYield) * 100).toFixed(2)}%` : "—"}
+                  </TableCell>
+
                   {/* Dashboard toggle */}
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -495,7 +525,8 @@ const TickersPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className={`h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity ${refreshMutation.isPending ? "animate-pulse" : ""}`}
+                          disabled={refreshMutation.isPending}
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
@@ -504,9 +535,10 @@ const TickersPage = () => {
                         <DropdownMenuItem
                           onClick={() => refreshMutation.mutate(t.id)}
                           className="gap-2"
+                          disabled={refreshMutation.isPending}
                         >
-                          <RefreshCw className="h-3 w-3" />
-                          Refresh enrichment
+                          <RefreshCw className={`h-3 w-3 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
+                          {refreshMutation.isPending ? "Refreshing..." : "Refresh enrichment"}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
