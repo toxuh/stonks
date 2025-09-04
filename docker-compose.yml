@@ -7,8 +7,10 @@ services:
       dockerfile: Dockerfile
     image: stonks-app:latest
     restart: unless-stopped
-    env_file:
-      - .env
+    environment:
+      - DATABASE_URL=production
+      - NEXT_TELEMETRY_DISABLED=1
+      - PORT=3000
     ports:
       - "22222:3000" # Host:Container
     # If your NAS needs a specific network, you can add:
