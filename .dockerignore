@@ -1,0 +1,26 @@
+# Dependencies and build output
+node_modules
+.next
+out
+build
+coverage
+.generated
+
+# Local env files (use docker-compose to provide env)
+.env*
+
+# VCS/IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# OS / misc
+.DS_Store
+
+# NAS-generated folders that break Next.js build
+**/@eaDir
+
+# Prisma cache
+prisma/migrations/*/steps.json
+

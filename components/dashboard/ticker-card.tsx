@@ -84,7 +84,7 @@ export const TickerCard = ({
     const prev = prevPriceRef.current;
     if (prev !== null && price !== prev) {
       setPulse(price > prev ? "up" : "down");
-      const id = setTimeout(() => setPulse(null), 500);
+      const id = setTimeout(() => setPulse(null), 400);
       return () => clearTimeout(id);
     }
     prevPriceRef.current = price;
@@ -115,18 +115,13 @@ export const TickerCard = ({
   const trendColor = getTrendColor(changePercent);
   const sparklineColor = getSparklineColor(changePercent);
 
-  const pulseBg =
-    pulse === "up"
-      ? "bg-green-500/10"
-      : pulse === "down"
-        ? "bg-red-500/10"
-        : "";
-  const pulseShadow =
-    pulse === "up"
-      ? "shadow-[0_0_0_3px_rgba(34,197,94,0.25)]"
-      : pulse === "down"
-        ? "shadow-[0_0_0_3px_rgba(239,68,68,0.25)]"
-        : "";
+  const pulseClass = pulse ? "animate-price-pulse" : "";
+  const pulseStyle = pulse ? {
+    "--pulse-bg": pulse === "up" ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)",
+    "--pulse-shadow": pulse === "up"
+      ? "0 0 0 3px rgba(34, 197, 94, 0.25)"
+      : "0 0 0 3px rgba(239, 68, 68, 0.25)"
+  } as React.CSSProperties : {};
 
   // Asset type detection: Crypto via SOURCE:SYMBOL, FX via prefixes or 6-letter pairs like EURUSD/EURUSD
   const isCrypto =
@@ -150,7 +145,8 @@ export const TickerCard = ({
 
   return (
     <Card
-      className={`group relative overflow-hidden transition-all duration-300 hover:shadow-custom-lg animate-fade-in gradient-card border-border/50 ${pulseBg} ${pulseShadow}`}
+      className={`group relative overflow-hidden transition-all duration-300 hover:shadow-custom-lg animate-fade-in gradient-card border-border/50 ${pulseClass}`}
+      style={pulseStyle}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-chart-1/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
@@ -229,6 +225,7 @@ export const TickerCard = ({
                   stroke={sparklineColor}
                   strokeWidth={2}
                   dot={false}
+                  isAnimationActive={false}
                 />
               </LineChart>
             </ResponsiveContainer>
