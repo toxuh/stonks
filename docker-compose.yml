@@ -7,17 +7,15 @@ services:
       dockerfile: Dockerfile
     image: stonks-app:latest
     restart: unless-stopped
-    environment:
-      - DATABASE_URL=production
-      - NEXT_TELEMETRY_DISABLED=1
-      - PORT=3000
-    ports:
-      - "22222:3000" # Host:Container
-    # If your NAS needs a specific network, you can add:
-    # networks:
-    #   - stonks-net
 
-# networks:
-#   stonks-net:
-#     driver: bridge
+    environment:
+      DATABASE_URL: "postgresql://user:pass@host.docker.internal:5432/dbname?schema=public"
+      NEXT_TELEMETRY_DISABLED: "1"
+      PORT: "3000"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    ports:
+      - "22222:3000"
 
